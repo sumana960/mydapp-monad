@@ -1,119 +1,62 @@
-import { useState } from "react";
-import { ethers } from "ethers";
-import { TOKEN_ABI } from "./abi"; // same folder as index.js
+import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js";
+import { TOKEN_ABI } from "./abi.js";
 
 const TOKEN_ADDRESS = "0x85C7f3E74154Ea90506079beb2f8D3000219944b";
 
-export default function Home() {
-  const [account, setAccount] = useState("");
-  const [balance, setBalance] = useState("");
-  const [to, setTo] = useState("");
-  const [amount, setAmount] = useState("");
-  const [loading, setLoading] = useState(false);
+const connectBtn = document.getElementById("connectWallet");
+const sendBtn = document.getElementById("send");
+const accountP = document.getElementById("account");
+const balanceP = document.getElementById("balance");
 
-  // 🔗 Connect Wallet
-  const connectWallet = async () => {
-    try {
-      if (!window.ethereum) {
-        alert("Please install MetaMask");
-        return;
-      }
+const toInput = document.getElementById("to");
+const amountInput = document.getElementById("amount");
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
-      setAccount(address);
+let provider;
+let signer;
+let token;
+let decimals;
 
-      const contract = new ethers.Contract(
-        TOKEN_ADDRESS,
-        TOKEN_ABI,
-        signer
-      );
+// 🔗 CONNECT WALLET
+connectBtn.onclick = async () => {
+  if (!window.ethereum) {
+    alert("Please install MetaMask");
+    return;
+  }
 
-      const bal = await contract.balanceOf(address);
-      setBalance(bal.toString()); // ✅ decimals = 0
-    } catch (err) {
-      console.error(err);
-      alert("Wallet connection failed");
-    }
-  };
+  provider = new ethers.providers.Web3Provider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  signer = provider.getSigner();
 
-  // 🚀 Send Tokens
-  const sendTokens = async () => {
-    try {
-      if (!to || !amount) {
-        alert("Receiver address or amount missing");
-        return;
-      }
+  const address = await signer.getAddress();
+  accountP.innerText = "Connected: " + address;
 
-      setLoading(true);
+  token = new ethers.Contract(TOKEN_ADDRESS, TOKEN_ABI, signer);
+  decimals = await token.decimals();
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+  const balance = await token.balanceOf(address);
+  balanceP.innerText =
+    "Balance: " + ethers.utils.formatUnits(balance, decimals);
+};
 
-      const contract = new ethers.Contract(
-        TOKEN_ADDRESS,
-        TOKEN_ABI,
-        signer
-      );
+// 🚀 SEND TOKENS
+sendBtn.onclick = async () => {
+  if (!token) {
+    alert("Connect wallet first");
+    return;
+  }
 
-      const tx = await contract.transfer(
-        to,
-        Number(amount) // ✅ decimals = 0
-      );
+  const to = toInput.value;
+  const amount = amountInput.value;
 
-      await tx.wait();
-      alert("Transaction successful 🎉");
+  if (!to || !amount) {
+    alert("Missing fields");
+    return;
+  }
 
-      // 🔄 Refresh balance
-      const newBalance = await contract.balanceOf(account);
-      setBalance(newBalance.toString());
-
-      setAmount("");
-      setTo("");
-    } catch (err) {
-      console.error(err);
-      alert("Transaction failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div style={{ padding: 20, fontFamily: "Arial" }}>
-      <h1>My Token DApp (Monad)</h1>
-
-      <button onClick={connectWallet}>
-        {account ? "Wallet Connected" : "Connect Wallet"}
-      </button>
-
-      {account && (
-        <>
-          <p><b>Account:</b> {account}</p>
-          <p><b>Balance:</b> {balance}</p>
-
-          <h3>Send Tokens</h3>
-
-          <input
-            placeholder="Receiver address"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            style={{ width: "100%", marginBottom: 10 }}
-          />
-
-          <input
-            placeholder="Amount"
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            style={{ width: "100%", marginBottom: 10 }}
-          />
-
-          <button onClick={sendTokens} disabled={loading}>
-            {loading ? "Sending..." : "Send"}
-          </button>
-        </>
-      )}
-    </div>
+  const tx = await token.transfer(
+    to,
+    ethers.utils.parseUnits(amount, decimals)
   );
-}
+
+  alert("Transaction sent: " + tx.hash);
+};
