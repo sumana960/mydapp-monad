@@ -29,10 +29,12 @@ async function connectWallet() {
       contractABI,
       signer
     );
+const balance = await contract.balanceOf(address);
+const readable = ethers.utils.formatUnits(balance, 18);
+document.getElementById("balance").innerText =
+  "Balance: " + readable;
 
-    const decimals = await contract.decimals();
-    const balance = await contract.balanceOf(userAddress);
-    const readableBalance = ethers.utils.formatUnits(balance, decimals);
+    
 
     document.getElementById("balance").innerText =
       "Balance: " + readableBalance;
