@@ -1,2 +1,0 @@
-# mydapp-monad
-mydapp monad
