@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MonadVault dApp</title>
+</head>
+<body>
+  <h2>MonadVault</h2>
+
+  <button onclick="connectWallet()">Connect Wallet</button>
+  <p>Compte : <span id="account">-</span></p>
+
+  <h3>Balance : <span id="balance">0</span></h3>
+
+  <input id="depositAmount" placeholder="Deposit amount" />
+  <button onclick="deposit()">Deposit</button>
+
+  <br><br>
+
+  <input id="withdrawAmount" placeholder="Withdraw amount" />
+  <button onclick="withdraw()">Withdraw</button>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
